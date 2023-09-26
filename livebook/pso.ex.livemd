@@ -1,0 +1,17 @@
+# Particle Swarm Optimization example
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.6.1"}
+])
+```
+
+## Swarm
+
+```elixir
+defmodule Swarm do
+  alias Nx
+
+  def start(nof_ants)
+end
+```

@@ -1,0 +1,214 @@
+# Particle Swarm Optimization example
+
+```elixir
+Mix.install([
+  {:nx, "~> 0.6.1"},
+  {:kino, "~> 0.10.0"},
+  {:nimble_options, "~> 1.0"}
+])
+```
+
+## Swarm
+
+```elixir
+defmodule Particle do
+  @moduledoc """
+  Implementation of a particle.
+
+  Velocity is updated with
+  $$
+  v_{i,d} ← w v_{i,d} + φ_p r_p (p_{i,d}-x_{i,d}) + φ_g r_g (g_d-x_{i,d})
+  $$
+  """
+
+  use GenServer
+
+  alias Nx
+
+  defstruct [:name, :position, :velocity, :personal_best, :personal_best_value]
+
+  def start_link(pso_args, opts \\ []) do
+    IO.puts("Starting " <> Atom.to_string(opts[:name]))
+    GenServer.start_link(__MODULE__, pso_args, opts)
+  end
+
+  def init(pso_args) do
+    {:ok, initialize_particle(pso_args)}
+  end
+
+  def initialize_particle(pso_args) do
+    pso_args
+    |> Map.merge(initialize_position(pso_args.dimensions, pso_args.bound_up, pso_args.bound_down))
+    |> Map.merge(initialize_velocity(pso_args.dimensions, pso_args.bound_up, pso_args.bound_down))
+  end
+
+  def initialize_position(dimensions, bound_up, bound_down) do
+    initial_position = random_uniform_tensor(dimensions, bound_down, bound_up)
+
+    %{position: initial_position, personal_best: initial_position}
+  end
+
+  def initialize_velocity(dimensions, bound_up, bound_down) do
+    domain = abs(bound_up - bound_down)
+
+    initial_velocity = random_uniform_tensor(dimensions, -domain, domain)
+
+    %{velocity: initial_velocity}
+  end
+
+  def random_uniform_tensor(dimensions, bound_up, bound_down) do
+    Enum.random(0..1701)
+    |> Nx.Random.key()
+    |> Nx.Random.uniform(bound_up, bound_down,
+      shape: {dimensions},
+      type: :f64
+    )
+    |> elem(0)
+  end
+
+  def handle_cast(:say_hello, state) do
+    IO.puts(state.position)
+    {:noreply, state}
+  end
+end
+```
+
+```elixir
+defmodule Swarm do
+  @moduledoc """
+  Implementation of a swarm.
+  """
+  use Supervisor
+
+  defstruct [
+    :population_size,
+    :num_iterations,
+    :dimensions,
+    :bound_up,
+    :bound_down,
+    :intertia,
+    :coef_p,
+    :coef_g
+  ]
+
+  @type t() :: %Swarm{
+          population_size: integer(),
+          num_iterations: integer(),
+          dimensions: integer(),
+          bound_up: float(),
+          bound_down: float(),
+          intertia: float(),
+          coef_p: float(),
+          coef_g: float()
+        }
+
+  opts = [
+    population_size: [
+      type: :pos_integer,
+      default: 10,
+      doc: """
+      The number of particles to be used in the optimization.
+      """
+    ],
+    num_iterations: [
+      type: :pos_integer,
+      default: 100,
+      doc: """
+      The number of iterations to be done in the optimization.
+      """
+    ],
+    dimensions: [
+      type: :pos_integer,
+      default: 2
+    ],
+    bound_up: [
+      type: :float,
+      default: 1.0
+    ],
+    bound_down: [
+      type: :float,
+      default: -1.0
+    ],
+    intertia: [
+      type: :float,
+      default: 0.6,
+      doc: """
+      Should be smaller than 1
+      """
+    ],
+    coef_p: [
+      type: :float,
+      default: 1.0
+    ],
+    coef_g: [
+      type: :float,
+      default: 3.0
+    ]
+  ]
+
+  @opts_schema NimbleOptions.new!(opts)
+
+  def new(opts \\ []) do
+    opts = NimbleOptions.validate!(opts, @opts_schema)
+    Supervisor.start_link(__MODULE__, {:ok, Map.new(opts)}, opts)
+  end
+
+  def run({:ok, _pid}) do
+    IO.puts("running...")
+    GenServer.cast(__MODULE__, :run)
+  end
+
+  def handle_cast(:run, state) do
+    dbg("handling call")
+
+    children_pids =
+      Supervisor.which_children(self())
+      |> Enum.map(fn {_id, child, _type, _modules} -> child end)
+      |> dbg
+
+    for particle <- children_pids, _iteration <- 0..state[:population_size] do
+      particle |> dbg()
+      GenServer.cast(particle, :say_hello)
+    end
+
+    {:no_reply, state}
+  end
+
+  def init({:ok, state}) do
+    [
+      "Starting PSO of",
+      Integer.to_string(state[:population_size]),
+      "and",
+      Integer.to_string(state[:num_iterations]),
+      "iterations..."
+    ]
+    |> Enum.join(" ")
+    |> IO.puts()
+
+    pso_args = Map.drop(state, [:population_size, :num_iterations])
+
+    children =
+      1..state[:population_size]
+      |> Enum.map(fn id ->
+        %{
+          id: id,
+          start: {Particle, :start_link, [pso_args, [name: String.to_atom("particle_#{id}")]]}
+        }
+      end)
+
+    Supervisor.init(children, strategy: :one_for_one)
+  end
+end
+```
+
+```elixir
+{:ok, supervisor_pid} = Swarm.new(population_size: 2)
+```
+
+```elixir
+supervisor_pid
+```
+
+```elixir
+GenServer.cast(supervisor_pid, :run)
+```
