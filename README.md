@@ -2,6 +2,8 @@
 
 Bio-inspired algorithms in Elixir.
 
-Current implementations:
+Implementations:
 
 - [x] Particle Swarm Optimization (PSO)
+- [ ] Ant Colony Optimization (ACO)
+- [ ] Knapsack
