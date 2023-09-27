@@ -50,7 +50,7 @@ defmodule Bia.PSO.Particle do
     random_p = random_uniform_tensor(state.dimensions)
     random_g = random_uniform_tensor(state.dimensions)
 
-    new_velocity = update_velocity(state, random_p, random_g, global_best)
+    new_velocity = update_velocity(Map.drop(state, [:fun]), random_p, random_g, global_best)
 
     new_position =
       state.position
@@ -58,7 +58,9 @@ defmodule Bia.PSO.Particle do
       |> bound_position(state.bound_up, state.bound_down)
 
     personal_best =
-      if Nx.sum(state.position) > Nx.sum(new_position), do: new_position, else: state.position
+      if state.fun.(state.position) > state.fun.(new_position),
+        do: new_position,
+        else: state.position
 
     new_state =
       state

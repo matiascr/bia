@@ -4,6 +4,8 @@ defmodule Bia.PSO.Swarm do
   """
   use Supervisor
 
+  require Nx
+
   @doc """
   Starts the particles.
   """
