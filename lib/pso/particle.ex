@@ -1,5 +1,5 @@
 defmodule Bia.PSO.Particle do
-  @moduledoc """
+  @moduledoc ~S"""
   Implementation of a particle.
 
   Velocity is updated with
