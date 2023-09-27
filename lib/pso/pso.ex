@@ -49,6 +49,23 @@ defmodule Bia.PSO do
   ]
 
   @opts_schema NimbleOptions.new!(opts)
+
+  @doc """
+  Creates a new instance of a PSO.
+
+  ## Options
+
+  #{NimbleOptions.docs(@opts_schema)}
+
+  ## Return Values
+
+    The function returns a tuple of two values:
+
+    * `supervisor` - the pid of the created Swarm supervisor.
+
+    * `opts` - the parameters of the initialized Swarm.
+  """
+  @spec new(Keyword.t()) :: {pid(), Keyword.t()}
   def new(opts \\ []) do
     opts = NimbleOptions.validate!(opts, @opts_schema)
 
@@ -57,6 +74,20 @@ defmodule Bia.PSO do
     {supervisor, opts}
   end
 
+  @doc """
+  Runs a given instance of an initialized Swarm with pid `supervisor` and options `opts`.
+
+  ## Return Values
+
+    The function returns a tuple witht the following:
+
+    * `:ok` - if the run was successful.
+
+    * `best position` - the position of the best result found.
+
+    * `best result` - the best result found.
+  """
+  @spec run({pid(), Keyword.t()}) :: {:ok, Nx.Tensor.t(), Nx.Tensor.t()}
   def run({supervisor, opts}) do
     # Initialize particlesm (vector and position)
     particles =
@@ -83,7 +114,7 @@ defmodule Bia.PSO do
     {:ok, result, Nx.sum(result)}
   end
 
-  def get_global_best_position(particles) do
+  defp get_global_best_position(particles) do
     particles
     |> Enum.map(&GenServer.call(&1, :get_best))
     |> Enum.min_by(fn x -> Nx.sum(x) |> Nx.to_number() end)

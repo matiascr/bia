@@ -4,7 +4,7 @@ defmodule Bia.PSO.Particle do
 
   Velocity is updated with
   $$
-  v_{i,d} ← w v_{i,d} + φ_p r_p (p_{i,d}-x_{i,d}) + φ_g r_g (g_d-x_{i,d})
+  v_{i,d} \leftarrow \omega v_{i,d} + \phi_p r_p (p_{i,d}-x_{i,d}) + \phi_g r_g (g_d-x_{i,d})
   $$
   """
   use GenServer
@@ -20,20 +20,20 @@ defmodule Bia.PSO.Particle do
     {:ok, initialize_particle(pso_args)}
   end
 
-  def initialize_particle(pso_args) do
+  defp initialize_particle(pso_args) do
     pso_args
     |> Map.merge(initialize_position(pso_args.dimensions, pso_args.bound_up, pso_args.bound_down))
     |> Map.merge(initialize_velocity(pso_args.dimensions, pso_args.bound_up, pso_args.bound_down))
     |> then(&Map.merge(&1, %{personal_best: &1.position}))
   end
 
-  def initialize_position(dimensions, bound_up, bound_down) do
+  defp initialize_position(dimensions, bound_up, bound_down) do
     initial_position = random_uniform_tensor(dimensions, bound_down, bound_up)
 
     %{position: initial_position, personal_best: initial_position}
   end
 
-  def initialize_velocity(dimensions, bound_up, bound_down) do
+  defp initialize_velocity(dimensions, bound_up, bound_down) do
     domain = abs(bound_up - bound_down)
 
     initial_velocity = random_uniform_tensor(dimensions, -domain, domain)
@@ -88,7 +88,7 @@ defmodule Bia.PSO.Particle do
     position + velocity
   end
 
-  def bound_position(position, bound_up, bound_down) do
+  defp bound_position(position, bound_up, bound_down) do
     position
     |> Nx.to_flat_list()
     |> Enum.map(fn i ->
@@ -101,7 +101,7 @@ defmodule Bia.PSO.Particle do
     |> Nx.tensor(type: :f64)
   end
 
-  def random_uniform_tensor(dimensions, bound_down \\ 0.0, bound_up \\ 1.0) do
+  defp random_uniform_tensor(dimensions, bound_down \\ 0.0, bound_up \\ 1.0) do
     Enum.random(0..1701)
     |> Nx.Random.key()
     |> Nx.Random.uniform(bound_down, bound_up, shape: {dimensions}, type: :f64)
