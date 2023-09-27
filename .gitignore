@@ -24,3 +24,4 @@ bia-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+.vscode/settings.json

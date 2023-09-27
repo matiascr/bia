@@ -35,7 +35,7 @@ defmodule Bia.PSO do
       type: :float,
       default: 0.6,
       doc: """
-      Should be smaller than 1
+      The inertia each particle carries each move. Should be smaller than 1.
       """
     ],
     coef_p: [
@@ -79,7 +79,7 @@ defmodule Bia.PSO do
 
   ## Return Values
 
-    The function returns a tuple witht the following:
+    The function returns a tuple with the following:
 
     * `:ok` - if the run was successful.
 
@@ -89,7 +89,7 @@ defmodule Bia.PSO do
   """
   @spec run({pid(), Keyword.t()}) :: {:ok, Nx.Tensor.t(), Nx.Tensor.t()}
   def run({supervisor, opts}) do
-    # Initialize particlesm (vector and position)
+    # Initialize particles (vector and position)
     particles =
       Supervisor.which_children(supervisor)
       |> Enum.map(fn {_, particle, _, _} -> particle end)

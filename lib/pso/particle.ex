@@ -3,9 +3,8 @@ defmodule Bia.PSO.Particle do
   Implementation of a particle.
 
   Velocity is updated with
-  $$
-  v_{i,d} \leftarrow \omega v_{i,d} + \phi_p r_p (p_{i,d}-x_{i,d}) + \phi_g r_g (g_d-x_{i,d})
-  $$
+
+  $$ v_{i,d} \leftarrow \omega v_{i,d} + \phi_p r_p (p_{i,d}-x_{i,d}) + \phi_g r_g (g_d-x_{i,d}) $$
   """
   use GenServer
 
@@ -72,12 +71,6 @@ defmodule Bia.PSO.Particle do
     {:reply, state.personal_best, state}
   end
 
-  @doc """
-  Update velocity as
-  $$
-  v_{i,d} ← w v_{i,d} + φ_p r_p (p_{i,d}-x_{i,d}) + φ_g r_g (g_d-x_{i,d})
-  $$
-  """
   defn update_velocity(state, random_p, random_g, global_best) do
     (state.inertia * state.velocity)
     |> Nx.add(state.coef_p * random_p * (state.personal_best - state.position))

@@ -39,8 +39,10 @@ defmodule Bia.MixProject do
       main: "Bia",
       source_url: @source_url,
       groups_for_modules: [
-        Heuristics: [
-          Bia.PSO
+        "Particle Swarm Optimization": [
+          Bia.PSO,
+          Bia.PSO.Swarm,
+          Bia.PSO.Particle
         ]
       ]
     ]
