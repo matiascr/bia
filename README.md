@@ -2,7 +2,7 @@
 
 Bio-inspired algorithms in Elixir.
 
-Implementations:
+Supported heuristics:
 
 - [x] Particle Swarm Optimization (PSO)
 - [ ] Ant Colony Optimization (ACO)
