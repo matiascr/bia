@@ -60,6 +60,13 @@ defmodule Bia.PSO do
       doc: """
       The social coefficient.
       """
+    ],
+    fun: [
+      type: {:fun, 1},
+      default: &Nx.sum(&1),
+      doc: """
+      The function to optimize.
+      """
     ]
   ]
 
@@ -82,7 +89,10 @@ defmodule Bia.PSO do
   """
   @spec new(Keyword.t()) :: {pid(), Keyword.t()}
   def new(opts \\ []) do
-    opts = NimbleOptions.validate!(opts, @opts_schema)
+    opts =
+      NimbleOptions.validate!(opts, @opts_schema)
+
+    # |> Keyword.drop([:fun])
 
     {:ok, supervisor} = Supervisor.start_link(Bia.PSO.Swarm, {:ok, Map.new(opts)}, opts)
 
@@ -110,28 +120,30 @@ defmodule Bia.PSO do
       |> Enum.map(fn {_, particle, _, _} -> particle end)
 
     # Get the first global best
-    global_best = get_global_best_position(particles)
+    global_best = get_global_best_position(particles, opts[:fun])
 
     result =
       Enum.reduce(0..opts[:num_iterations], global_best, fn _, global_best ->
         # Move particles
         Enum.map(particles, &GenServer.call(&1, {:move, global_best}))
         # Get particle position with best result
-        iterations_best = get_global_best_position(particles)
+        iterations_best = get_global_best_position(particles, opts[:fun])
         # Update global best if the newest is better
-        if Nx.sum(global_best) > Nx.sum(iterations_best), do: iterations_best, else: global_best
+        if opts[:fun].(global_best) > opts[:fun].(iterations_best),
+          do: iterations_best,
+          else: global_best
       end)
 
     # Kill the processes
     Supervisor.stop(supervisor)
 
     # Return the best position and the best result
-    {:ok, result, Nx.sum(result)}
+    {:ok, result, opts[:fun].(result)}
   end
 
-  defp get_global_best_position(particles) do
+  defp get_global_best_position(particles, fun) do
     particles
     |> Enum.map(&GenServer.call(&1, :get_best))
-    |> Enum.min_by(fn x -> Nx.sum(x) |> Nx.to_number() end)
+    |> Enum.min_by(fn x -> fun.(x) |> Nx.to_number() end)
   end
 end
