@@ -5,7 +5,7 @@ defmodule Bia.PSO.Swarm do
   use Supervisor
 
   @doc """
-  Starts the particles
+  Starts the particles.
   """
   def init({:ok, state}) do
     [

@@ -21,15 +21,24 @@ defmodule Bia.PSO do
     ],
     dimensions: [
       type: :pos_integer,
-      default: 2
+      default: 2,
+      doc: """
+      The dimensions of the search space.
+      """
     ],
     bound_up: [
       type: :float,
-      default: 5.12
+      default: 5.12,
+      doc: """
+      The upper boundary of the search space.
+      """
     ],
     bound_down: [
       type: :float,
-      default: -5.12
+      default: -5.12,
+      doc: """
+      The lower boundary of the search space.
+      """
     ],
     inertia: [
       type: :float,
@@ -40,11 +49,17 @@ defmodule Bia.PSO do
     ],
     coef_p: [
       type: :float,
-      default: 1.0
+      default: 1.0,
+      doc: """
+      The cognitive coefficient.
+      """
     ],
     coef_g: [
       type: :float,
-      default: 3.0
+      default: 3.0,
+      doc: """
+      The social coefficient.
+      """
     ]
   ]
 
