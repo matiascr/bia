@@ -7,10 +7,9 @@ defmodule Bia.PSO.Particle do
   v_{i,d} ← w v_{i,d} + φ_p r_p (p_{i,d}-x_{i,d}) + φ_g r_g (g_d-x_{i,d})
   $$
   """
-
   use GenServer
 
-  alias Nx
+  require Nx
   import Nx.Defn
 
   def start_link(pso_args, opts \\ []) do
@@ -42,34 +41,20 @@ defmodule Bia.PSO.Particle do
     %{velocity: initial_velocity}
   end
 
-  def random_uniform_tensor(dimensions, bound_up, bound_down) do
-    Enum.random(0..1701)
-    |> Nx.Random.key()
-    |> Nx.Random.uniform(bound_up, bound_down, shape: {dimensions}, type: :f64)
-    |> elem(0)
-  end
-
-  def handle_cast(:say_hello, state) do
-    {:noreply, state}
-  end
-
   def handle_cast({:set_best, global_best}, state) do
     {:noreply, %{state | global_best: global_best}}
   end
 
-  @doc """
-  Update velocity as
-  $$
-  v_{i,d} ← w v_{i,d} + φ_p r_p (p_{i,d}-x_{i,d}) + φ_g r_g (g_d-x_{i,d})
-  $$
-  """
   def handle_call({:move, global_best}, _from, state) do
-    random_g = random_uniform_tensor(state.dimensions, state.bound_up, state.bound_down)
-    random_p = random_uniform_tensor(state.dimensions, state.bound_up, state.bound_down)
+    random_p = random_uniform_tensor(state.dimensions)
+    random_g = random_uniform_tensor(state.dimensions)
 
     new_velocity = update_velocity(state, random_p, random_g, global_best)
 
-    new_position = update_position(new_velocity, state.position)
+    new_position =
+      state.position
+      |> update_position(new_velocity)
+      |> bound_position(state.bound_up, state.bound_down)
 
     personal_best =
       if Nx.sum(state.position) > Nx.sum(new_position), do: new_position, else: state.position
@@ -87,13 +72,39 @@ defmodule Bia.PSO.Particle do
     {:reply, state.personal_best, state}
   end
 
+  @doc """
+  Update velocity as
+  $$
+  v_{i,d} ← w v_{i,d} + φ_p r_p (p_{i,d}-x_{i,d}) + φ_g r_g (g_d-x_{i,d})
+  $$
+  """
   defn update_velocity(state, random_p, random_g, global_best) do
-    state.inertia * state.velocity +
-      state.coef_p * random_p * (state.personal_best - state.position) +
-      state.coef_g * random_g * (global_best - state.position)
+    (state.inertia * state.velocity)
+    |> Nx.add(state.coef_p * random_p * (state.personal_best - state.position))
+    |> Nx.add(state.coef_g * random_g * (global_best - state.position))
   end
 
-  defn update_position(velocity, position) do
-    velocity + position
+  defn update_position(position, velocity) do
+    position + velocity
+  end
+
+  def bound_position(position, bound_up, bound_down) do
+    position
+    |> Nx.to_flat_list()
+    |> Enum.map(fn i ->
+      cond do
+        i > bound_up -> bound_up
+        i < bound_down -> bound_down
+        true -> i
+      end
+    end)
+    |> Nx.tensor(type: :f64)
+  end
+
+  def random_uniform_tensor(dimensions, bound_down \\ 0.0, bound_up \\ 1.0) do
+    Enum.random(0..1701)
+    |> Nx.Random.key()
+    |> Nx.Random.uniform(bound_down, bound_up, shape: {dimensions}, type: :f64)
+    |> elem(0)
   end
 end

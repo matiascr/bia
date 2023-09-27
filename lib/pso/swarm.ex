@@ -3,32 +3,10 @@ defmodule Bia.PSO.Swarm do
   Implementation of a swarm.
   """
   use Supervisor
-  alias Bia.PSO.Particle
 
-  defstruct [
-    :population_size,
-    :num_iterations,
-    :dimensions,
-    :bound_up,
-    :bound_down,
-    :intertia,
-    :coef_p,
-    :coef_g
-  ]
-
-  alias Bia.PSO.Swarm
-
-  @type t() :: %Swarm{
-          population_size: integer(),
-          num_iterations: integer(),
-          dimensions: integer(),
-          bound_up: float(),
-          bound_down: float(),
-          intertia: float(),
-          coef_p: float(),
-          coef_g: float()
-        }
-
+  @doc """
+  Starts the particles
+  """
   def init({:ok, state}) do
     [
       "Starting PSO of",
@@ -49,7 +27,8 @@ defmodule Bia.PSO.Swarm do
       |> Enum.map(fn id ->
         %{
           id: id,
-          start: {Particle, :start_link, [pso_args, [name: String.to_atom("particle_#{id}")]]}
+          start:
+            {Bia.PSO.Particle, :start_link, [pso_args, [name: String.to_atom("particle_#{id}")]]}
         }
       end)
 
