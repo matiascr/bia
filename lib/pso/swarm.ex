@@ -1,14 +1,10 @@
-defmodule Bia.PSO.Swarm do
-  @moduledoc """
-  Implementation of a swarm.
-  """
+defmodule PSO.Swarm do
+  @moduledoc false
   use Supervisor
 
   require Nx
 
-  @doc """
-  Starts the particles.
-  """
+  @doc false
   def init({:ok, state}) do
     [
       "Starting PSO of",
@@ -29,8 +25,7 @@ defmodule Bia.PSO.Swarm do
       |> Enum.map(fn id ->
         %{
           id: id,
-          start:
-            {Bia.PSO.Particle, :start_link, [pso_args, [name: String.to_atom("particle_#{id}")]]}
+          start: {PSO.Particle, :start_link, [pso_args, [name: String.to_atom("particle_#{id}")]]}
         }
       end)
 

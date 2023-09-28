@@ -1,6 +1,12 @@
-defmodule Bia.PSO do
+defmodule PSO do
   @moduledoc """
   Implementation of Particle Swarm Optimization in Elixir.
+
+  Velocity is updated with
+
+  $$
+  v_{i,d} \\leftarrow \\omega v_{i,d} + \\phi_p r_p (p_{i,d}-x_{i,d}) + \\phi_g r_g (g_d-x_{i,d})
+  $$
   """
   require Nx
 
@@ -94,7 +100,7 @@ defmodule Bia.PSO do
 
     # |> Keyword.drop([:fun])
 
-    {:ok, supervisor} = Supervisor.start_link(Bia.PSO.Swarm, {:ok, Map.new(opts)}, opts)
+    {:ok, supervisor} = Supervisor.start_link(PSO.Swarm, {:ok, Map.new(opts)}, opts)
 
     {supervisor, opts}
   end
@@ -112,7 +118,7 @@ defmodule Bia.PSO do
 
     * `best result` - the best result found.
   """
-  @spec run({pid(), Keyword.t()}) :: {:ok, Nx.Tensor.t(), Nx.Tensor.t()}
+  @spec run({pid(), Keyword.t()}) :: map()
   def run({supervisor, opts}) do
     # Initialize particles (vector and position)
     particles =
@@ -122,7 +128,7 @@ defmodule Bia.PSO do
     # Get the first global best
     global_best = get_global_best_position(particles, opts[:fun])
 
-    result =
+    result_position =
       Enum.reduce(0..opts[:num_iterations], global_best, fn _, global_best ->
         # Move particles
         Enum.map(particles, &GenServer.call(&1, {:move, global_best}))
@@ -137,8 +143,10 @@ defmodule Bia.PSO do
     # Kill the processes
     Supervisor.stop(supervisor)
 
-    # Return the best position and the best result
-    {:ok, result, opts[:fun].(result)}
+    %{
+      best_position: result_position,
+      best: opts[:fun].(result_position)
+    }
   end
 
   defp get_global_best_position(particles, fun) do

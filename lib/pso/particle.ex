@@ -1,22 +1,17 @@
-defmodule Bia.PSO.Particle do
-  @moduledoc ~S"""
-  Implementation of a particle.
+defmodule PSO.Particle do
+  @moduledoc false
 
-  Velocity is updated with
-
-  $$
-  v_{i,d} \\leftarrow \\omega v_{i,d} + \\phi_p r_p (p_{i,d}-x_{i,d}) + \\phi_g r_g (g_d-x_{i,d})
-  $$
-  """
   use GenServer
 
   require Nx
   import Nx.Defn
 
+  @doc false
   def start_link(pso_args, opts \\ []) do
     GenServer.start_link(__MODULE__, pso_args, opts)
   end
 
+  @impl true
   def init(pso_args) do
     {:ok, initialize_particle(pso_args)}
   end
@@ -42,10 +37,12 @@ defmodule Bia.PSO.Particle do
     %{velocity: initial_velocity}
   end
 
+  @impl true
   def handle_cast({:set_best, global_best}, state) do
     {:noreply, %{state | global_best: global_best}}
   end
 
+  @impl true
   def handle_call({:move, global_best}, _from, state) do
     random_p = random_uniform_tensor(state.dimensions)
     random_g = random_uniform_tensor(state.dimensions)
@@ -71,20 +68,22 @@ defmodule Bia.PSO.Particle do
     {:reply, personal_best, new_state}
   end
 
+  @impl true
   def handle_call(:get_best, _from, state) do
     {:reply, state.personal_best, state}
   end
 
-  defn update_velocity(state, random_p, random_g, global_best) do
+  defnp update_velocity(state, random_p, random_g, global_best) do
     (state.inertia * state.velocity)
     |> Nx.add(state.coef_p * random_p * (state.personal_best - state.position))
     |> Nx.add(state.coef_g * random_g * (global_best - state.position))
   end
 
-  defn update_position(position, velocity) do
+  defnp update_position(position, velocity) do
     position + velocity
   end
 
+  @doc false
   defp bound_position(position, bound_up, bound_down) do
     position
     |> Nx.to_flat_list()
@@ -98,6 +97,7 @@ defmodule Bia.PSO.Particle do
     |> Nx.tensor(type: :f64)
   end
 
+  @doc false
   defp random_uniform_tensor(dimensions, bound_down \\ 0.0, bound_up \\ 1.0) do
     Enum.random(0..1701)
     |> Nx.Random.key()
