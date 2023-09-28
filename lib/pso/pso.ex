@@ -10,6 +10,10 @@ defmodule PSO do
   """
   require Nx
 
+  @type supervisor() :: pid()
+  @type config() :: keyword()
+  @type results() :: map()
+
   opts = [
     population_size: [
       type: :pos_integer,
@@ -93,7 +97,7 @@ defmodule PSO do
 
     * `opts` - the parameters of the initialized Swarm.
   """
-  @spec new(Keyword.t()) :: {pid(), Keyword.t()}
+  @spec new(keyword(any())) :: {supervisor(), config()}
   def new(opts \\ []) do
     opts =
       NimbleOptions.validate!(opts, @opts_schema)
@@ -110,15 +114,13 @@ defmodule PSO do
 
   ## Return Values
 
-    The function returns a tuple with the following:
+    The function returns a map with the following:
 
-    * `:ok` - if the run was successful.
+    * `best_position` - the position of the best result found.
 
-    * `best position` - the position of the best result found.
-
-    * `best result` - the best result found.
+    * `best` - the best result found.
   """
-  @spec run({pid(), Keyword.t()}) :: map()
+  @spec run({supervisor(), config()}) :: results()
   def run({supervisor, opts}) do
     # Initialize particles (vector and position)
     particles =

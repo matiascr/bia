@@ -6,16 +6,6 @@ defmodule PSO.Swarm do
 
   @doc false
   def init({:ok, state}) do
-    [
-      "Starting PSO of",
-      Integer.to_string(state[:population_size]),
-      "and",
-      Integer.to_string(state[:num_iterations]),
-      "iterations..."
-    ]
-    |> Enum.join(" ")
-    |> IO.puts()
-
     pso_args =
       state
       |> Map.drop([:population_size, :num_iterations])

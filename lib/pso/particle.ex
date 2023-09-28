@@ -1,6 +1,5 @@
 defmodule PSO.Particle do
   @moduledoc false
-
   use GenServer
 
   require Nx
@@ -83,7 +82,6 @@ defmodule PSO.Particle do
     position + velocity
   end
 
-  @doc false
   defp bound_position(position, bound_up, bound_down) do
     position
     |> Nx.to_flat_list()
@@ -97,7 +95,6 @@ defmodule PSO.Particle do
     |> Nx.tensor(type: :f64)
   end
 
-  @doc false
   defp random_uniform_tensor(dimensions, bound_down \\ 0.0, bound_up \\ 1.0) do
     Enum.random(0..1701)
     |> Nx.Random.key()
