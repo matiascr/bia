@@ -40,4 +40,19 @@ defmodule PsoTest do
       assert i <= bound_up and i >= bound_down
     end)
   end
+
+  test "inject custom callback" do
+    defmodule CustomCallbackDefiner do
+      def callback(_opts) do
+        IO.puts(".")
+      end
+    end
+
+    PSO.new(
+      population_size: 1,
+      num_iterations: 0,
+      callback: &CustomCallbackDefiner.callback/1
+    )
+    |> PSO.run()
+  end
 end
