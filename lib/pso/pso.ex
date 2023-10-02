@@ -23,7 +23,7 @@ defmodule PSO do
       """
     ],
     num_iterations: [
-      type: :pos_integer,
+      type: :non_neg_integer,
       default: 100,
       doc: """
       The number of iterations to be done in the optimization.
@@ -77,6 +77,20 @@ defmodule PSO do
       doc: """
       The function to optimize.
       """
+    ],
+    callback: [
+      type: {:fun, 1},
+      default: &PSO.callback(&1),
+      doc: """
+      The function to optimize.
+      """
+    ],
+    widget: [
+      type: :any,
+      default: nil,
+      doc: """
+      A widget for getting the data visualized.
+      """
     ]
   ]
 
@@ -99,12 +113,14 @@ defmodule PSO do
   """
   @spec new(keyword(any())) :: {supervisor(), config()}
   def new(opts \\ []) do
-    opts =
-      NimbleOptions.validate!(opts, @opts_schema)
+    opts = NimbleOptions.validate!(opts, @opts_schema)
 
-    # |> Keyword.drop([:fun])
+    particle_opts =
+      opts
+      |> Map.new()
+      |> Map.drop([:callback, :widget])
 
-    {:ok, supervisor} = Supervisor.start_link(PSO.Swarm, {:ok, Map.new(opts)}, opts)
+    {:ok, supervisor} = Supervisor.start_link(PSO.Swarm, {:ok, particle_opts}, opts)
 
     {supervisor, opts}
   end
@@ -130,16 +146,24 @@ defmodule PSO do
     # Get the first global best
     global_best = get_global_best_position(particles, opts[:fun])
 
+    opts[:callback].(opts: opts, particles: particles, global_best: global_best)
+
+    # Iterate
     result_position =
-      Enum.reduce(0..opts[:num_iterations], global_best, fn _, global_best ->
+      Enum.reduce(1..opts[:num_iterations]//1, global_best, fn _, global_best ->
         # Move particles
         Enum.map(particles, &GenServer.call(&1, {:move, global_best}))
         # Get particle position with best result
         iterations_best = get_global_best_position(particles, opts[:fun])
         # Update global best if the newest is better
-        if opts[:fun].(global_best) > opts[:fun].(iterations_best),
-          do: iterations_best,
-          else: global_best
+        new_global_best =
+          if opts[:fun].(global_best) > opts[:fun].(iterations_best),
+            do: iterations_best,
+            else: global_best
+
+        opts[:callback].(opts: opts, particles: particles, global_best: new_global_best)
+
+        new_global_best
       end)
 
     # Kill the processes
@@ -156,4 +180,6 @@ defmodule PSO do
     |> Enum.map(&GenServer.call(&1, :get_best))
     |> Enum.min_by(fn x -> fun.(x) |> Nx.to_number() end)
   end
+
+  def callback(_), do: nil
 end

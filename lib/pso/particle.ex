@@ -72,6 +72,11 @@ defmodule PSO.Particle do
     {:reply, state.personal_best, state}
   end
 
+  @impl true
+  def handle_call(:get_position, _from, state) do
+    {:reply, state.position, state}
+  end
+
   defnp update_velocity(state, random_p, random_g, global_best) do
     (state.inertia * state.velocity)
     |> Nx.add(state.coef_p * random_p * (state.personal_best - state.position))
