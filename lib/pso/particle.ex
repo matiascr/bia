@@ -63,6 +63,7 @@ defmodule PSO.Particle do
       |> Map.merge(%{velocity: new_velocity})
       |> Map.merge(%{position: new_position})
       |> Map.merge(%{personal_best: personal_best})
+      |> Map.merge(%{global_best: global_best})
 
     {:reply, personal_best, new_state}
   end
