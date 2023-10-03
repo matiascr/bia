@@ -79,8 +79,8 @@ defmodule PSO.Particle do
 
   defnp update_velocity(state, random_p, random_g, global_best) do
     (state.inertia * state.velocity)
-    |> Nx.add(state.coef_p * random_p * (state.personal_best - state.position))
-    |> Nx.add(state.coef_g * random_g * (global_best - state.position))
+    |> Nx.add(state.coeff_p * random_p * (state.personal_best - state.position))
+    |> Nx.add(state.coeff_g * random_g * (global_best - state.position))
   end
 
   defnp update_position(position, velocity) do

@@ -57,14 +57,14 @@ defmodule PSO do
       The inertia each particle carries each move. Should be smaller than 1.
       """
     ],
-    coef_p: [
+    coeff_p: [
       type: :float,
       default: 1.0,
       doc: """
       The cognitive coefficient.
       """
     ],
-    coef_g: [
+    coeff_g: [
       type: :float,
       default: 3.0,
       doc: """
