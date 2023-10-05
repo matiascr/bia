@@ -1,0 +1,174 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# PSO example
+
+```elixir
+Mix.install([
+  {:bia, github: "matiascr/bia"},
+  {:kino, "~> 0.10.0"},
+  {:kino_vega_lite, "~> 0.1.10"},
+  {:nx, "~> 0.6.2"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Visualizing the PSO
+
+We start by defining
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+alias VegaLite, as: Vl
+require Kino.VegaLite, as: KVl
+
+widget = fn down, up ->
+  Vl.new(
+    title: [
+      text: "PSO in action",
+      offset: 20
+    ],
+    width: 400,
+    height: 400
+  )
+  |> Vl.mark(:circle, color: :green, tooltip: true)
+  |> Vl.encode_field(:x, "x", type: :quantitative, scale: [domain: [down, up]])
+  |> Vl.encode_field(:y, "y", type: :quantitative, scale: [domain: [down, up]])
+  |> Vl.encode_field(:color, "value", type: :quantitative)
+  |> KVl.new()
+  |> Kino.render()
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Function<41.125776118/2 in :erl_eval.expr/6>
+```
+
+First, we define a callback to provide to the Bia PSO implementation to be executed after each iteration of the process.
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defmodule Visualizer do
+  def callback(args) do
+    opts = args[:opts]
+    widget = opts[:widget]
+
+    widget
+    |> KVl.clear()
+
+    widget
+    |> KVl.push_many(
+      Enum.map(args[:particles], &GenServer.call(&1, :get_position))
+      |> Nx.stack()
+      |> Nx.to_list()
+      |> Enum.map(fn t = [x, y] ->
+        %{
+          x: x,
+          y: y,
+          value: Nx.tensor(t) |> opts[:fun].() |> Nx.to_number()
+        }
+      end)
+    )
+
+    Process.sleep(25)
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Visualizer, <<70, 79, 82, 49, 0, 0, 10, ...>>, {:callback, 1}}
+```
+
+Next, we define the functions to be optimized by the algorithm.
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defmodule OptimizationFunctions do
+  import Nx.Defn
+
+  defn unimodal(t) do
+    0.26 * (t[0] ** 2 + t[1] ** 2) - 0.48 * t[0] * t[1]
+  end
+
+  defn inverted_pyramid(t) do
+    Nx.abs(t[0]) + Nx.abs(t[1])
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, OptimizationFunctions, <<70, 79, 82, 49, 0, 0, 12, ...>>, true}
+```
+
+Here we create a form to input the parameters of the heuristic.
+
+```elixir
+form =
+  Kino.Control.form(
+    [
+      num_iterations: Kino.Input.number("Number of iterations", default: 200),
+      population_size: Kino.Input.number("Number of particles", default: 20),
+      inertia: Kino.Input.number("Number of iterations", default: 0.9),
+      coeff_g: Kino.Input.number("Social coefficient", default: 0.01),
+      coeff_p: Kino.Input.number("Cognitive coefficient", default: 0.01),
+      bound_up: Kino.Input.number("Upper boundary", default: 2.5),
+      bound_down: Kino.Input.number("Lower boundary", default: -2.5)
+    ],
+    submit: "Run"
+  )
+```
+
+<!-- livebook:{"reevaluate_automatically":true} -->
+
+```elixir
+defaults = [
+  callback: &Visualizer.callback/1,
+  # Change this function to try new examples
+  fun: &OptimizationFunctions.unimodal/1
+]
+
+form
+|> Kino.Control.stream()
+|> Kino.listen(fn event ->
+  widget = [widget: widget.(event.data.bound_down, event.data.bound_up)]
+
+  (Map.to_list(event.data) ++ defaults ++ widget)
+  |> PSO.new()
+  |> PSO.run()
+  |> IO.inspect()
+end)
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+%{
+  best_position: #Nx.Tensor<
+    f64[2]
+    [0.09509448639438148, 0.09887525428069609]
+  >,
+  best: #Nx.Tensor<
+    f64
+    3.798159749535011e-4
+  >
+}
+```
