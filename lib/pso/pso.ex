@@ -138,30 +138,33 @@ defmodule PSO do
   """
   @spec run({supervisor(), config()}) :: results()
   def run({supervisor, opts}) do
-    # Initialize particles (vector and position)
+    fun = opts[:fun]
+    callback = opts[:callback]
+
     particles =
-      Supervisor.which_children(supervisor)
+      supervisor
+      |> Supervisor.which_children()
       |> Enum.map(fn {_, particle, _, _} -> particle end)
 
-    # Get the first global best
-    global_best = get_global_best_position(particles, opts[:fun])
+    # Update the swarm's best known position
+    global_best = particles |> get_global_best_position(fun)
 
-    opts[:callback].(opts: opts, particles: particles, global_best: global_best)
+    callback.(opts: opts, particles: particles, global_best: global_best)
 
     # Iterate
     result_position =
-      Enum.reduce(1..opts[:num_iterations]//1, global_best, fn _, global_best ->
+      Enum.reduce(1..opts[:num_iterations]//1, global_best, fn _, gb ->
         # Move particles
-        Enum.map(particles, &GenServer.call(&1, {:move, global_best}))
+        Enum.map(particles, &GenServer.call(&1, {:move, gb}))
         # Get particle position with best result
-        iterations_best = get_global_best_position(particles, opts[:fun])
+        iterations_best = particles |> get_global_best_position(fun)
         # Update global best if the newest is better
         new_global_best =
-          if opts[:fun].(global_best) > opts[:fun].(iterations_best),
+          if fun.(gb) |> Nx.greater(fun.(iterations_best)),
             do: iterations_best,
-            else: global_best
+            else: gb
 
-        opts[:callback].(opts: opts, particles: particles, global_best: new_global_best)
+        callback.(opts: opts, particles: particles, global_best: new_global_best)
 
         new_global_best
       end)
@@ -171,7 +174,7 @@ defmodule PSO do
 
     %{
       best_position: result_position,
-      best: opts[:fun].(result_position)
+      best: fun.(result_position)
     }
   end
 
