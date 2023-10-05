@@ -78,6 +78,7 @@ defmodule Visualizer do
       end)
     )
 
+    # An artificial delay of 25ms so the process is visible
     Process.sleep(25)
   end
 end
@@ -113,6 +114,8 @@ end
 {:module, OptimizationFunctions, <<70, 79, 82, 49, 0, 0, 12, ...>>, true}
 ```
 
+## Running the algorithm
+
 Here we create a form to input the parameters of the heuristic.
 
 ```elixir
@@ -121,9 +124,9 @@ form =
     [
       num_iterations: Kino.Input.number("Number of iterations", default: 200),
       population_size: Kino.Input.number("Number of particles", default: 20),
-      inertia: Kino.Input.number("Number of iterations", default: 0.9),
-      coeff_g: Kino.Input.number("Social coefficient", default: 0.01),
-      coeff_p: Kino.Input.number("Cognitive coefficient", default: 0.01),
+      inertia: Kino.Input.number("Inertia (w)", default: 0.9),
+      coeff_p: Kino.Input.number("Cognitive coefficient (φp)", default: 0.01),
+      coeff_g: Kino.Input.number("Social coefficient (φg)", default: 0.01),
       bound_up: Kino.Input.number("Upper boundary", default: 2.5),
       bound_down: Kino.Input.number("Lower boundary", default: -2.5)
     ],
@@ -143,9 +146,10 @@ defaults = [
 form
 |> Kino.Control.stream()
 |> Kino.listen(fn event ->
-  widget = [widget: widget.(event.data.bound_down, event.data.bound_up)]
+  data = event.data
+  widget = [widget: widget.(data.bound_down, data.bound_up)]
 
-  (Map.to_list(event.data) ++ defaults ++ widget)
+  (Map.to_list(data) ++ defaults ++ widget)
   |> PSO.new()
   |> PSO.run()
   |> IO.inspect()
@@ -162,13 +166,13 @@ end)
 
 ```
 %{
-  best_position: #Nx.Tensor<
-    f64[2]
-    [0.09509448639438148, 0.09887525428069609]
-  >,
   best: #Nx.Tensor<
     f64
-    3.798159749535011e-4
+    0.001429206004077782
+  >,
+  best_position: #Nx.Tensor<
+    f64[2]
+    [-0.19077561969014026, -0.1867318081531509]
   >
 }
 ```
