@@ -1,0 +1,196 @@
+<!-- livebook:{"persist_outputs":true} -->
+
+# PSO example
+
+```elixir
+Mix.install([
+  {:bia, github: "matiascr/bia"},
+  {:kino, "~> 0.10.0"},
+  {:kino_vega_lite, "~> 0.1.10"},
+  {:vega_lite, "~> 0.1.8"},
+  {:explorer, "~> 0.7.1"}
+])
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+* Getting bia (https://github.com/matiascr/bia.git)
+remote: Enumerating objects: 125, done.        
+remote: Counting objects: 100% (125/125), done.        
+remote: Compressing objects: 100% (86/86), done.        
+remote: Total 125 (delta 59), reused 94 (delta 36), pack-reused 0        
+origin/HEAD set to main
+Resolving Hex dependencies...
+Resolution completed in 0.207s
+New:
+  aws_signature 0.3.1
+  castore 1.0.3
+  complex 0.5.0
+  explorer 0.7.1
+  fss 0.1.1
+  kino 0.10.0
+  kino_vega_lite 0.1.10
+  nimble_options 1.0.2
+  nx 0.6.2
+  rustler_precompiled 0.7.0
+  table 0.1.2
+  table_rex 4.0.0
+  telemetry 1.2.1
+  vega_lite 0.1.8
+* Getting kino (Hex package)
+* Getting kino_vega_lite (Hex package)
+* Getting vega_lite (Hex package)
+* Getting explorer (Hex package)
+* Getting aws_signature (Hex package)
+* Getting castore (Hex package)
+* Getting fss (Hex package)
+* Getting rustler_precompiled (Hex package)
+* Getting table (Hex package)
+* Getting table_rex (Hex package)
+* Getting nx (Hex package)
+* Getting nimble_options (Hex package)
+* Getting complex (Hex package)
+* Getting telemetry (Hex package)
+===> Analyzing applications...
+===> Compiling aws_signature
+==> table
+Compiling 5 files (.ex)
+Generated table app
+==> vega_lite
+Compiling 6 files (.ex)
+Generated vega_lite app
+==> nimble_options
+Compiling 3 files (.ex)
+Generated nimble_options app
+===> Analyzing applications...
+===> Compiling telemetry
+==> fss
+Compiling 4 files (.ex)
+Generated fss app
+==> complex
+Compiling 2 files (.ex)
+Generated complex app
+==> nx
+Compiling 32 files (.ex)
+Generated nx app
+==> kino
+Compiling 41 files (.ex)
+Generated kino app
+==> kino_vega_lite
+Compiling 4 files (.ex)
+Generated kino_vega_lite app
+==> table_rex
+Compiling 7 files (.ex)
+Generated table_rex app
+==> castore
+Compiling 1 file (.ex)
+Generated castore app
+==> rustler_precompiled
+Compiling 4 files (.ex)
+Generated rustler_precompiled app
+==> explorer
+Compiling 24 files (.ex)
+
+23:38:16.144 [debug] Copying NIF from cache and extracting to /Users/matias/Library/Caches/mix/installs/elixir-1.15.2-erts-14.0.2/e45c2eb049617251b503892f5dabed05/_build/dev/lib/explorer/priv/native/libexplorer-v0.7.1-nif-2.15-aarch64-apple-darwin.so
+Generated explorer app
+==> bia
+Compiling 4 files (.ex)
+Generated bia app
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+:ok
+```
+
+## Section
+
+```elixir
+alias VegaLite, as: Vl
+require Kino.VegaLite, as: KVl
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+Kino.VegaLite
+```
+
+```elixir
+defmodule Visualizer do
+  def callback(args) do
+    widget = args[:opts][:widget]
+
+    widget
+    |> KVl.clear()
+
+    widget
+    |> KVl.push_many(
+      Enum.map(args[:particles], &GenServer.call(&1, :get_position))
+      |> Nx.stack()
+      |> Nx.to_list()
+      |> Enum.map(fn [x, y] -> %{x: x, y: y} end)
+    )
+
+    Process.sleep(25)
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, Visualizer, <<70, 79, 82, 49, 0, 0, 9, ...>>, {:callback, 1}}
+```
+
+```elixir
+defmodule OptimizationFunctions do
+  import Nx.Defn
+
+  defn unimodal(tensor) do
+    0.26 * (tensor[0] ** 2 + tensor[1] ** 2) - 0.48 * tensor[0] * tensor[1]
+  end
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+{:module, OptimizationFunctions, <<70, 79, 82, 49, 0, 0, 10, ...>>, true}
+```
+
+```elixir
+bound_up = 10.0
+bound_down = -10.0
+
+widget = fn ->
+  Vl.new(width: 400, height: 400)
+  |> Vl.mark(:circle)
+  |> Vl.encode_field(:x, "x", type: :quantitative, scale: [domain: [bound_down, bound_up]])
+  |> Vl.encode_field(:y, "y", type: :quantitative, scale: [domain: [bound_down, bound_up]])
+  |> KVl.new()
+  |> Kino.render()
+end
+```
+
+<!-- livebook:{"output":true} -->
+
+```
+#Function<43.125776118/0 in :erl_eval.expr/6>
+```
+
+```elixir
+PSO.new(
+  population_size: 20,
+  num_iterations: 10,
+  bound_up: bound_up,
+  bound_down: bound_down,
+  inertia: 0.1,
+  callback: &Visualizer.callback/1,
+  widget: widget.(),
+  fun: &OptimizationFunctions.unimodal/1
+)
+|> PSO.run()
+```
