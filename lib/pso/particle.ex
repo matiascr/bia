@@ -17,15 +17,18 @@ defmodule PSO.Particle do
 
   defp initialize_particle(pso_args) do
     pso_args
+    # Initialize the particle's position with a uniformly distributed random vector
     |> Map.merge(initialize_position(pso_args.dimensions, pso_args.bound_up, pso_args.bound_down))
+    # Initialize the particle's velocity
     |> Map.merge(initialize_velocity(pso_args.dimensions, pso_args.bound_up, pso_args.bound_down))
+    # Initialize the particle's best known position to its initial position
     |> then(&Map.merge(&1, %{personal_best: &1.position}))
   end
 
   defp initialize_position(dimensions, bound_up, bound_down) do
     initial_position = random_uniform_tensor(dimensions, bound_down, bound_up)
 
-    %{position: initial_position, personal_best: initial_position}
+    %{position: initial_position}
   end
 
   defp initialize_velocity(dimensions, bound_up, bound_down) do
@@ -43,15 +46,16 @@ defmodule PSO.Particle do
 
   @impl true
   def handle_call({:move, global_best}, _from, state) do
+    # Pick random numbers
     random_p = random_uniform_tensor(state.dimensions)
     random_g = random_uniform_tensor(state.dimensions)
 
-    new_velocity = update_velocity(Map.drop(state, [:fun]), random_p, random_g, global_best)
-
     new_position =
       state.position
-      |> update_position(new_velocity)
+      |> update_position(state.velocity)
       |> bound_position(state.bound_up, state.bound_down)
+
+    new_velocity = update_velocity(Map.drop(state, [:fun]), random_p, random_g, global_best)
 
     personal_best =
       if state.fun.(state.position) > state.fun.(new_position),
