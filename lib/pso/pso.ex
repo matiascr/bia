@@ -185,5 +185,6 @@ defmodule PSO do
     |> Enum.min_by(fn x -> fun.(x) |> Nx.to_number() end)
   end
 
-  defp callback(_), do: nil
+  @doc false
+  def callback(_), do: nil
 end
