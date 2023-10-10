@@ -82,7 +82,7 @@ defmodule PSO do
       type: {:fun, 1},
       default: &PSO.callback(&1),
       doc: """
-      The function to optimize.
+      A function to be called after each iteration.
       """
     ],
     widget: [
@@ -185,5 +185,5 @@ defmodule PSO do
     |> Enum.min_by(fn x -> fun.(x) |> Nx.to_number() end)
   end
 
-  def callback(_), do: nil
+  defp callback(_), do: nil
 end
