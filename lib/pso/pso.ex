@@ -1,5 +1,5 @@
 defmodule PSO do
-  @moduledoc """
+  @moduledoc ~S"""
   Implementation of Particle Swarm Optimization in Elixir.
 
   Velocity is updated with
@@ -154,7 +154,6 @@ defmodule PSO do
     # Iterate
     result_position =
       Enum.reduce(1..opts[:num_iterations]//1, global_best, fn _, gb ->
-
         # Move particles
         Enum.map(particles, &GenServer.call(&1, {:move, gb}))
         # Get particle position with best result
