@@ -8,7 +8,7 @@ defmodule Bia.MixProject do
       app: :bia,
       name: "Bia",
       version: "0.1.0",
-      elixir: "~> 1.15",
+      elixir: "~> 1.16",
       start_permanent: Mix.env() == :prod,
       source_url: @source_url,
       deps: deps(),
@@ -26,7 +26,7 @@ defmodule Bia.MixProject do
   defp deps do
     [
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
-      {:nx, ">= 0.0.0"},
+      {:nx, ">= 0.6.0"},
       {:nimble_options, ">= 0.5.2"},
       {:exla, ">= 0.6.0", optional: true}
     ]

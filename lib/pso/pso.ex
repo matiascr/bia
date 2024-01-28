@@ -5,7 +5,7 @@ defmodule PSO do
   Velocity is updated with
 
   $$
-  v_{i,d} \\leftarrow \\omega v_{i,d} + \\phi_p r_p (p_{i,d}-x_{i,d}) + \\phi_g r_g (g_d-x_{i,d})
+  v_{i,d} \leftarrow \omega v_{i,d} + \phi_p r_p (p_{i,d}-x_{i,d}) + \phi_g r_g (g_d-x_{i,d})
   $$
   """
   require Nx
