@@ -38,6 +38,7 @@ defmodule Bia.MixProject do
       source_url: @source_url,
       extra_section: "Guides",
       extras: [
+        "README.md",
         "notebooks/pso_example.livemd"
       ],
       groups_for_modules: [
