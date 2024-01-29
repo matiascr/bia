@@ -34,7 +34,7 @@ defmodule Bia.MixProject do
 
   defp docs do
     [
-      main: "readme",
+      main: "bia",
       source_url: @source_url,
       extra_section: "Guides",
       extras: [
