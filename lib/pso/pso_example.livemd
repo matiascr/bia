@@ -10,12 +10,16 @@ Mix.install([
 ])
 ```
 
-## Section
+## Setup
+
+We start by defining aliases for the libraries we'll use for visualizing the PSO
 
 ```elixir
 alias VegaLite, as: Vl
 require Kino.VegaLite, as: KVl
 ```
+
+Now, we define a Visualizer module that contains a callback
 
 ```elixir
 defmodule Visualizer do
@@ -33,20 +37,12 @@ defmodule Visualizer do
       |> Enum.map(fn [x, y] -> %{x: x, y: y} end)
     )
 
-    Process.sleep(100)
+    Process.sleep(250)
   end
 end
 ```
 
-```elixir
-defmodule OptimizationFunctions do
-  import Nx.Defn
-
-  defn unimodal(tensor) do
-    0.26 * (tensor[0] ** 2 + tensor[1] ** 2) - 0.48 * tensor[0] * tensor[1]
-  end
-end
-```
+and create it with the parameters we want for the graph
 
 ```elixir
 bound_up = 10.0
@@ -62,16 +58,40 @@ widget = fn ->
 end
 ```
 
+We add some functions for the PSO to optimize
+
+```elixir
+defmodule OptimizationFunctions do
+  import Nx.Defn
+
+  defn unimodal(t) do
+    0.26 * (t[0] ** 2 + t[1] ** 2) - 0.48 * t[0] * t[1]
+  end
+
+  defn inverted_pyramid(t) do
+    Nx.abs(t[0]) + Nx.abs(t[1])
+  end
+end
+```
+
+## Running the PSO
+
+Finally, we run the PSO algorithm.
+
+In the first step, we add the parameters of the heuristic, along with other optional parameters for in the callback and widget parameters. These will allow us to inject actions that will be performed after each iteration of the PSO. In this case, we have created a graph, and it will be updated each iteration with the position of the particles.
+
 ```elixir
 PSO.new(
-  population_size: 20,
-  num_iterations: 10,
+  population_size: 50,
+  num_iterations: 20,
   bound_up: bound_up,
   bound_down: bound_down,
   inertia: 0.1,
+  coeff_p: 2.0,
+  coeff_g: 1.0,
   callback: &Visualizer.callback/1,
   widget: widget.(),
-  fun: &OptimizationFunctions.unimodal/1
+  fun: &OptimizationFunctions.inverted_pyramid/1
 )
 |> PSO.run()
 ```
