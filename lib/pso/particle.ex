@@ -63,11 +63,13 @@ defmodule PSO.Particle do
         else: state.position
 
     new_state =
-      state
-      |> Map.merge(%{velocity: new_velocity})
-      |> Map.merge(%{position: new_position})
-      |> Map.merge(%{personal_best: personal_best})
-      |> Map.merge(%{global_best: global_best})
+      %{
+        velocity: new_velocity,
+        position: new_position,
+        personal_best: personal_best,
+        global_best: global_best
+      }
+      |> Enum.into(state)
 
     {:reply, personal_best, new_state}
   end
@@ -97,7 +99,7 @@ defmodule PSO.Particle do
     |> Nx.to_flat_list()
     |> Enum.map(fn i ->
       cond do
-        i > bound_up -> bound_up
+        i >= bound_up -> bound_up
         i < bound_down -> bound_down
         true -> i
       end

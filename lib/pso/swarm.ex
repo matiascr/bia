@@ -11,12 +11,8 @@ defmodule PSO.Swarm do
       |> Map.drop([:population_size, :num_iterations])
 
     children =
-      1..state[:population_size]
-      |> Enum.map(fn id ->
-        %{
-          id: id,
-          start: {PSO.Particle, :start_link, [pso_args, [name: String.to_atom("particle_#{id}")]]}
-        }
+      Enum.map(1..state[:population_size], fn id ->
+        Supervisor.child_spec({PSO.Particle, pso_args}, id: id)
       end)
 
     Supervisor.init(children, strategy: :one_for_one)
