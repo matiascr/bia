@@ -10,6 +10,8 @@ defmodule PSO do
   """
   require Nx
 
+  @behaviour Bia.Heuristic
+
   @type supervisor() :: pid()
   @type config() :: keyword()
   @type results() :: map()
@@ -111,7 +113,8 @@ defmodule PSO do
 
     * `opts` - the parameters of the initialized Swarm.
   """
-  @spec new(keyword(any())) :: {supervisor(), config()}
+  @impl true
+  @spec new(keyword()) :: {supervisor(), config()}
   def new(opts \\ []) do
     opts = NimbleOptions.validate!(opts, @opts_schema)
 
@@ -136,6 +139,7 @@ defmodule PSO do
 
     * `best` - the best result found.
   """
+  @impl true
   @spec run({supervisor(), config()}) :: results()
   def run({supervisor, opts}) do
     fun = opts[:fun]
