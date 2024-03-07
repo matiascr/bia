@@ -28,7 +28,8 @@ defmodule Bia.MixProject do
       {:ex_doc, "~> 0.30", only: :dev, runtime: false},
       {:nx, ">= 0.6.0"},
       {:nimble_options, ">= 0.5.2"},
-      {:exla, ">= 0.6.0", optional: true}
+      {:exla, ">= 0.6.0", optional: true},
+      {:dialyxir, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
   end
 

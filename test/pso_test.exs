@@ -1,4 +1,4 @@
-defmodule PsoTest do
+defmodule PSOTest do
   use ExUnit.Case
   doctest PSO
 
